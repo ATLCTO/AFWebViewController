@@ -324,4 +324,34 @@
     [self updateToolbarItems];
 }
 
+- (void)webView:(WKWebView *)webView decidePolicyForNavigationAction:(WKNavigationAction *)navigationAction decisionHandler:(void (^)(WKNavigationActionPolicy))decisionHandler
+{
+    if(webView != self.webView) {
+        decisionHandler(WKNavigationActionPolicyAllow);
+        return;
+    }
+    
+    UIApplication *app = [UIApplication sharedApplication];
+    NSURL         *url = navigationAction.request.URL;
+    
+    if (!navigationAction.targetFrame) {
+        // enable _blank targets
+        if (navigationAction.navigationType == WKNavigationTypeLinkActivated &&
+            [url.scheme hasPrefix:@"http"]) {
+            decisionHandler(WKNavigationActionPolicyCancel);
+            
+            [self.webView loadRequest:navigationAction.request];
+            return;
+            
+        } else if ([app canOpenURL:url]) {
+            [app openURL:url];
+            decisionHandler(WKNavigationActionPolicyCancel);
+            return;
+        }
+    }
+    
+    decisionHandler(WKNavigationActionPolicyAllow);
+}
+
+
 @end
